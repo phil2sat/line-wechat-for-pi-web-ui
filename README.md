@@ -1,53 +1,52 @@
 # LINE + WeChat for pi-web-ui
 
-A two-channel personal-account connector pack for pi-web-ui.
+A personal-account messaging connector pack for pi-web-ui. It supports **reading and sending** through both LINE and WeChat, with separate provider adapters.
 
-- **WeChat:** the upstream `wechat-ilink` plugin, retained as a separate adapter.
-- **LINE:** a personal-account connector powered by [Yomi](https://github.com/RikaiDev/yomi), not the LINE Official Account Messaging API.
+| Provider | Personal-account transport | Read | Draft | Send |
+|---|---|---:|---:|---:|
+| LINE | [Yomi](https://github.com/RikaiDev/yomi) MCP server | Yes | Yes | After explicit approval |
+| WeChat | WeChat iLink protocol | Yes | Manual send UI / optional agent tool | Configurable; automatic agent replies disabled by default |
 
-Both adapters are designed around human-reviewed replies. The LINE adapter exposes read-only conversation tools and a draft tool to the agent. Sending is deliberately not exposed as an agent tool: the user must approve a specific draft in the plugin view.
+## Plugins
+
+### LINE personal account
+
+Path: `plugins/line/`
+
+- Uses Yomi; it does not use the LINE Official Account Messaging API.
+- Passwordless secondary-device login from the plugin view.
+- Agent tools for listing conversations, reading messages, and creating German reply drafts.
+- Incoming messages are to be translated into German by the agent; original text remains available.
+- The user reviews a draft and explicitly approves the exact draft.
+- Only after approval does the plugin translate the approved German text into the recipient's language and send it through the personal LINE account.
+- No direct LINE send tool is exposed to the agent.
+
+See [LINE plugin setup](./plugins/line/README.md).
+
+### WeChat personal account
+
+Path: `plugins/wechat-ilink/`
+
+- Based on the upstream pi-web-ui WeChat iLink plugin.
+- QR login, outbound long polling, inbox, media handling, and manual sending.
+- Automatic agent-driving and AI send are disabled by default in the imported manifest.
+- The AI send tool can be explicitly enabled in plugin settings if desired.
+
+See [WeChat plugin documentation](./plugins/wechat-ilink/README.en.md).
 
 ## Installation
 
-Copy the desired plugin directory into pi-web-ui's plugin directory:
+Copy either or both plugin directories into the pi-web-ui plugin directory, enable them, and reload plugins.
 
-- `plugins/line` for personal LINE accounts.
-- `plugins/wechat-ilink` for WeChat iLink accounts.
+## Important provider limitations
 
-Enable the plugin and reload plugins.
+- **LINE/Yomi:** unofficial personal-account client; may violate LINE terms or cause rate limiting/account suspension. LINE permits only one desktop client session per account, so Yomi can sign out the official LINE Desktop app. E2EE group history depends on Letter Sealing key epochs. On Linux/Windows Yomi currently documents a local JSON credential-store fallback.
+- **WeChat iLink:** unofficial personal-account automation path; provider behavior and account restrictions may change. Use a secondary account first.
+- Neither implementation is affiliated with or endorsed by LINE Corporation or Tencent.
 
-## LINE workflow
+## Development checks
 
-1. Start Yomi from the plugin view and complete its passwordless secondary-device login.
-2. Read conversations and messages with the agent tools.
-3. The agent translates incoming messages into German and creates a German reply draft with the target language recorded.
-4. Review and approve or reject the exact draft in the plugin view.
-5. On approval, the plugin translates the approved German text into the target language and sends it through the personal LINE account.
-6. The translated outgoing text and send result are shown in the view.
-
-The agent cannot send LINE messages directly. Approval is bound to one immutable draft ID and exact text. Editing or replacing a draft creates a new approval target.
-
-## Requirements
-
-- pi-web-ui with plugin SDK API support for `registerAgentTool`, `onClientMessage`, `llm.complete`, `storage`, and `secrets`.
-- Node.js 22.13 or newer.
-- LINE account with secondary-device login enabled.
-- Internet access for the first Yomi package installation.
-
-Yomi is launched with `npx --yes @rikaidev/yomi@0.7.5`. Its own credential storage and protocol implementation remain upstream-owned.
-
-## Security and limitations
-
-- Yomi is an unofficial personal-account client, not affiliated with LINE Corporation. Use at your own risk.
-- Yomi may sign out the official LINE Desktop client because LINE permits only one desktop session per account.
-- On Linux and Windows, Yomi documents a local JSON credential-store fallback; protect the host and its data directory.
-- LINE message history and E2EE visibility are subject to LINE's secondary-device and Letter Sealing limitations.
-- The WeChat adapter is based on the upstream iLink implementation. Its automatic agent-driving and AI-send settings are disabled by default in this pack; manual operation remains available.
-- This repository does not claim that either provider's unofficial protocol is supported or endorsed by its vendor.
-
-## Development
-
-Run the built-in checks from each plugin directory:
+From each plugin directory:
 
 ```bash
 node --check index.mjs
@@ -55,4 +54,4 @@ node --check client/entry.mjs
 node --test
 ```
 
-See each plugin's README for provider-specific setup.
+LINE requires Node.js 22.13+ for the pinned Yomi release. Yomi is installed on demand through npm on first use.
