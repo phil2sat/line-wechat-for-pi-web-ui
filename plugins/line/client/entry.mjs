@@ -85,7 +85,8 @@ export default {
       $("drafts").innerHTML = (state.drafts ?? []).slice().reverse().map((draft) => `
         <article class="line-draft">
           <div><strong>${esc(draft.chatName)}</strong> <span class="line-muted">· ${esc(draft.targetLanguage)} · ${esc(draft.status)}</span></div>
-          <div style="white-space:pre-wrap">${esc(draft.germanText)}</div>
+          ${draft.sourceMessage ? `<div><strong>Original message:</strong><div style="white-space:pre-wrap">${esc(draft.sourceMessage)}</div></div>` : ""}
+          <div><strong>German reply:</strong><div style="white-space:pre-wrap">${esc(draft.germanText)}</div></div>
           ${draft.translatedText ? `<div><strong>Translated:</strong><div style="white-space:pre-wrap">${esc(draft.translatedText)}</div></div>` : ""}
           ${draft.error ? `<div class="line-error">${esc(draft.error)}</div>` : ""}
           ${draft.status === "pending" ? `<div class="line-actions"><button data-approve="${esc(draft.id)}">Approve, translate and send</button><button data-reject="${esc(draft.id)}">Reject</button></div>` : ""}
