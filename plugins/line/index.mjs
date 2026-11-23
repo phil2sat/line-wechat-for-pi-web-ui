@@ -38,6 +38,7 @@ class YomiClient {
     this.child = spawn(command, ["--yes", packageName], {
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,
+      shell: process.platform === "win32",
       env: { ...process.env, YOMI_LOG_LEVEL: "warn" },
     });
     this.child.stdout.setEncoding("utf8");
