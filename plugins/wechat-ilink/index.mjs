@@ -1974,51 +1974,7 @@ export default {
 					}
 				});
 			} catch (err) { host.log("register WeChat read/draft tools failed:", err?.message ?? err); }
-			if (settings().aiSend === false) return;
-			try {
-				st.toolOff = host.registerAgentTool({
-					name: "wechat_send",
-					label: "Send WeChat message",
-					description:
-						"Send a text and/or a local media file (image/video/file) over the WeChat channel to a paired user. Relative paths resolve against the channel workspace; http(s) URLs are downloaded first.",
-					parameters: {
-						type: "object",
-						properties: {
-							to: { type: "string", description: "WeChat user ID (visible in the view's inbox)" },
-							text: { type: "string", description: "Message text (optional when media is given)" },
-							image: {
-								type: "string",
-								description: "Image file path or http(s) URL to send",
-							},
-							file: {
-								type: "string",
-								description: "Any other file path or http(s) URL (video/pdf/zip/...)",
-							},
-						},
-						required: ["to"],
-					},
-					async execute(_id, params) {
-						const to = String(params?.to ?? "").trim();
-						const text = String(params?.text ?? "").trim();
-						const image = String(params?.image ?? "").trim();
-						const file = String(params?.file ?? "").trim();
-						if (!to) throw new Error("wechat_send 需要 to");
-						if (!text && !image && !file) throw new Error("wechat_send 需要 text / image / file 至少一个");
-						if (!isAllowed(to)) throw new Error(`未配对用户：${to}（先在 💬 视图允许）`);
-						if (text) await sendText(to, cut(stripInternalMarkers(text), REPLY_CAP), st.peerCtx[to]);
-						const sent = [];
-						for (const spec of [image, file]) {
-							if (!spec) continue;
-							const abs = await resolveOutboundPath(spec, to);
-							const kind = await sendMediaFile(to, abs, st.peerCtx[to]);
-							sent.push(`${MEDIA_LABEL[kind] ?? "媒体"}:${basename(abs)}`);
-						}
-						return sent.length ? `已发送给 ${to}：${sent.join("、")}` : `已发送给 ${to}`;
-					},
-				});
-			} catch (err) {
-				host.log("register wechat_send failed:", err?.message ?? err);
-			}
+
 		}
 
 		const offMsg = host.onMessage((payload, from) => {
