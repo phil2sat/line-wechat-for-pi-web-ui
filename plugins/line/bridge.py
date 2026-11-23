@@ -13,7 +13,6 @@ from typing import Any
 
 from okline import OkLine
 from qrcode import QRCode
-from qrcode.image.svg import SvgPathImage
 
 SESSION_PATH = Path(sys.argv[1]).expanduser()
 api: OkLine | None = None
@@ -31,9 +30,21 @@ def qr_data_uri(url: str) -> str:
     qr = QRCode(border=4, box_size=8)
     qr.add_data(url)
     qr.make(fit=True)
-    image = qr.make_image(image_factory=SvgPathImage)
-    raw = image.to_string(encoding="unicode")
-    return "data:image/svg+xml;base64," + base64.b64encode(raw.encode("utf-8")).decode("ascii")
+    matrix = qr.get_matrix()
+    size = len(matrix)
+    paths = " ".join(
+        "M" + str(x) + "," + str(y) + "h1v1h-1z"
+        for y, row in enumerate(matrix)
+        for x, dark in enumerate(row)
+        if dark
+    )
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '
+        + str(size) + " " + str(size)
+        + '" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/>'
+        + '<path d="' + paths + '" fill="#000"/></svg>'
+    )
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
 
 
 def current_api() -> OkLine:
