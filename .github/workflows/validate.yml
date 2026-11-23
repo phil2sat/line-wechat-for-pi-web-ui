@@ -2,7 +2,7 @@ name: Validate plugins
 
 on:
   push:
-    branches: [main]
+    branches: [main, line-qr-login]
   pull_request:
     branches: [main]
 
@@ -18,6 +18,7 @@ jobs:
         run: |
           node --check plugins/line/index.mjs
           node --check plugins/line/client/entry.mjs
+          python -m py_compile plugins/line/bridge.py
           node --check plugins/wechat-ilink/index.mjs
           node --check plugins/wechat-ilink/client/entry.mjs
       - name: Run plugin tests

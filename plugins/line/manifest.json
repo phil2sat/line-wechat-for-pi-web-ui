@@ -2,22 +2,13 @@
   "id": "line",
   "name": "LINE Personal Account",
   "nameEn": "LINE Personal Account",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "alwaysOn": true,
   "icon": "💬",
-  "description": "Read personal LINE conversations, translate and draft replies, then send only after explicit approval.",
-  "descriptionEn": "Personal LINE account connector with translation, reply drafts, and explicit send approval.",
+  "description": "Personal LINE account integration with Chrome-extension-compatible QR login, chat reading, translation, reply drafts and explicit send approval.",
+  "descriptionEn": "Personal LINE account integration with QR login, chat reading, translation, reply drafts and explicit send approval.",
   "permissions": ["ui", "tools", "llm", "storage"],
   "settings": [
-    {
-      "key": "yomiVersion",
-      "type": "text",
-      "label": "Yomi package version",
-      "labelEn": "Yomi package version",
-      "default": "0.7.5",
-      "hint": "Pinned upstream Yomi version used by npx.",
-      "hintEn": "Pinned upstream Yomi version used by npx."
-    },
     {
       "key": "defaultTargetLanguage",
       "type": "text",
