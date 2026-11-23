@@ -206,15 +206,24 @@ def dispatch(request: dict[str, Any]) -> None:
 
 
 def main() -> None:
-    for line in sys.stdin:
-        try:
-            request = json.loads(line)
-            if isinstance(request, dict):
-                dispatch(request)
-        except SystemExit:
-            break
-        except Exception as exc:
-            emit({"event": "error", "error": str(exc)})
+    global api
+    try:
+        for line in sys.stdin:
+            try:
+                request = json.loads(line)
+                if isinstance(request, dict):
+                    dispatch(request)
+            except SystemExit:
+                break
+            except Exception as exc:
+                emit({"event": "error", "error": str(exc)})
+    finally:
+        if api is not None:
+            try:
+                api.close()
+            except Exception:
+                pass
+            api = None
 
 
 if __name__ == "__main__":
