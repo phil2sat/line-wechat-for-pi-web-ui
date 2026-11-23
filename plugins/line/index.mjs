@@ -179,6 +179,11 @@ export default {
     let preparing = null;
     let drafts = (host.storage.get("drafts", []) ?? []).map(safeDraft).slice(-MAX_DRAFTS);
     const toolsOff = [];
+    const savedSessionPath = join(homedir(), ".cache", "pi-web-ui", "line", "session.json");
+    if (existsSync(savedSessionPath)) {
+      state.connected = true;
+      state.loginStatus = "Saved LINE session found — refresh to verify.";
+    }
 
     const publish = () => host.broadcast({ kind: "line-state", state: { ...state, drafts } });
     const saveDrafts = async () => {
