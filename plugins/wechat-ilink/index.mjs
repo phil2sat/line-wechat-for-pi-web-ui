@@ -1870,6 +1870,7 @@ export default {
 							st.botId = String(s.ilink_bot_id ?? "");
 							st.loginAt = Date.now();
 							save();
+							applyAiTool();
 							st.qr = null;
 							st.qrTimer = null;
 							host.notify("info", "微信登录成功，开始接收消息", "WeChat login succeeded");
