@@ -12,7 +12,7 @@ function asArray(value) {
 
 export default {
   mount(container, ctx) {
-    container.innerHTML = \`
+    container.innerHTML = `
       <section class="line-panel">
         <style>
           .line-panel{padding:16px;display:grid;gap:14px;color:var(--text)}
@@ -68,7 +68,7 @@ export default {
           <div data-ref="drafts"></div>
         </div>
         <div data-ref="error" class="line-error"></div>
-      </section>\`;
+      </section>`;
 
     const $ = (key) => container.querySelector('[data-ref="' + key + '"]');
     let state = { chats: [], messages: [], drafts: [], busy: false };
