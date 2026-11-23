@@ -165,6 +165,7 @@ export default {
 	<section data-ref="sec-login"><h3 data-i18n="loginSection">${t("loginSection")}</h3><div data-ref="login"></div></section>
 	<section data-ref="sec-pair" style="display:none"><h3 data-i18n="pendingSection">${t("pendingSection")}</h3><ul data-ref="pending"></ul></section>
 	<section><h3 data-i18n="inboxSection">${t("inboxSection")}</h3><ul data-ref="inbox"><li style="opacity:.5" data-i18n="inboxEmpty">${t("inboxEmpty")}</li></ul></section>
+	<section><h3>Reply drafts — approval required</h3><ul data-ref="drafts"><li style="opacity:.5">No reply drafts.</li></ul></section>
 	<section><h3 data-i18n="sendSection">${t("sendSection")}</h3>
 		<div class="row">
 			<input data-ref="to" data-i18n-ph="toPlaceholder" placeholder="${t("toPlaceholder")}" style="flex:1;min-width:140px" />
@@ -193,6 +194,7 @@ export default {
 			pendingSec = $("sec-pair"),
 			pendingEl = $("pending"),
 			inboxEl = $("inbox"),
+			draftsEl = $("drafts"),
 			errEl = $("err");
 		let lastInbox = [];
 		let lastState = null;
@@ -339,6 +341,7 @@ export default {
 				)
 				.join("");
 			renderInbox(s.inbox ?? []);
+			renderDrafts(s.drafts ?? []);
 		}
 
 		function renderInbox(items) {
@@ -362,6 +365,18 @@ export default {
 				: `<li style="opacity:.5" data-i18n="inboxEmpty">${t("inboxEmpty")}</li>`;
 		}
 
+		function renderDrafts(items) {
+			draftsEl.innerHTML = items.length ? items.slice().reverse().map((draft) => `
+<li>
+	<div class="meta"><b>${esc(draft.peer)}</b><span>${esc(timeStr(draft.createdAt))}</span><span>${esc(draft.targetLanguage)}</span><b>${esc(draft.status)}</b></div>
+	<div style="white-space:pre-wrap"><b>German draft:</b> ${esc(draft.germanText)}</div>
+	${draft.sourceMessage ? `<div style="white-space:pre-wrap;opacity:.7"><b>Source:</b> ${esc(draft.sourceMessage)}</div>` : ""}
+	${draft.translatedText ? `<div style="white-space:pre-wrap"><b>Translated:</b> ${esc(draft.translatedText)}</div>` : ""}
+	${draft.error ? `<div class="err">${esc(draft.error)}</div>` : ""}
+	${draft.status === "pending" ? `<div class="row" style="margin-top:6px"><button data-act="approve-draft" data-draft="${esc(draft.id)}">Approve, translate and send</button><button class="ghost" data-act="reject-draft" data-draft="${esc(draft.id)}">Reject</button></div>` : ""}
+</li>`).join("") : '<li style="opacity:.5">No reply drafts.</li>';
+		}
+
 		container.addEventListener("click", (e) => {
 			const btn = e.target.closest("[data-act]");
 			if (!btn) return;
@@ -371,6 +386,9 @@ export default {
 			else if (act === "logout") ctx.send({ action: "logout" });
 			else if (act === "allow") ctx.send({ action: "allow", peer: btn.dataset.peer });
 			else if (act === "deny") ctx.send({ action: "deny", peer: btn.dataset.peer });
+			else if (act === "approve-draft") {
+				if (globalThis.confirm("Translate and send this exact WeChat draft?")) ctx.send({ action: "approve_draft", draftId: btn.dataset.draft });
+			} else if (act === "reject-draft") ctx.send({ action: "reject_draft", draftId: btn.dataset.draft });
 			else if (act === "open-session") {
 				const target = currentWorkspace || currentHostCwd;
 				if (target) {
