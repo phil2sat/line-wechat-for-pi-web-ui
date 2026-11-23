@@ -5,7 +5,7 @@ A personal-account messaging connector pack for pi-web-ui. It supports **reading
 | Provider | Personal-account transport | Read | Draft | Send |
 |---|---|---:|---:|---:|
 | LINE | [Yomi](https://github.com/RikaiDev/yomi) MCP server | Yes | Yes | After explicit approval |
-| WeChat | WeChat iLink protocol | Yes | Manual send UI / optional agent tool | Configurable; automatic agent replies disabled by default |
+| WeChat | WeChat iLink protocol | Yes | Yes | After explicit approval by default |
 
 ## Plugins
 
@@ -28,9 +28,10 @@ See [LINE plugin setup](./plugins/line/README.md).
 Path: `plugins/wechat-ilink/`
 
 - Based on the upstream pi-web-ui WeChat iLink plugin.
-- QR login, outbound long polling, inbox, media handling, and manual sending.
-- Automatic agent-driving and AI send are disabled by default in the imported manifest.
-- The AI send tool can be explicitly enabled in plugin settings if desired.
+- QR login, outbound long polling, inbox, media handling, and personal-account sending.
+- Agent tools expose recent inbox messages and create German reply drafts.
+- The plugin view requires explicit approval, translates the approved draft, then sends it.
+- Automatic agent-driving and direct AI sending remain disabled by default.
 
 See [WeChat plugin documentation](./plugins/wechat-ilink/README.en.md).
 
