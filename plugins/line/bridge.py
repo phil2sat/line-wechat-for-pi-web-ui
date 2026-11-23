@@ -8,7 +8,6 @@ import json
 import os
 import sys
 import threading
-import traceback
 from pathlib import Path
 from typing import Any
 
@@ -34,8 +33,7 @@ def qr_data_uri(url: str) -> str:
     qr.make(fit=True)
     image = qr.make_image(image_factory=SvgPathImage)
     raw = image.to_string(encoding="unicode")
-    encoded = base64.b64encode(raw.encode("utf-8")).decode("ascii")
-    return "data:image/svg+xml;base64," + encoded
+    return "data:image/svg+xml;base64," + base64.b64encode(raw.encode("utf-8")).decode("ascii")
 
 
 def current_api() -> OkLine:
@@ -47,19 +45,12 @@ def current_api() -> OkLine:
     return api
 
 
-def safe_message(message: dict[str, Any]) -> dict[str, Any]:
-    client = current_api()
-    try:
-        return client.decrypt_message(message)
-    except Exception:
-        return {**message, "text": "[encrypted — could not decrypt]"}
-
-
-def login() -> None:
+def login(request_id: int) -> None:
     global api
     if not login_lock.acquire(blocking=False):
-        emit({"event": "error", "error": "A LINE login is already running."})
+        emit({"id": request_id, "ok": False, "error": "A LINE login is already running."})
         return
+    emit({"id": request_id, "ok": True, "started": True})
 
     def run() -> None:
         global api
@@ -72,7 +63,7 @@ def login() -> None:
                 wait_seconds=240,
             )
             if not result.success or not result.access_token:
-                raise RuntimeError(result.display_message or f"LINE login failed (type={result.type}).")
+                raise RuntimeError(result.display_message or "LINE QR login failed.")
             SESSION_PATH.parent.mkdir(parents=True, exist_ok=True)
             client.save_tokens(str(SESSION_PATH))
             try:
@@ -88,10 +79,7 @@ def login() -> None:
             profile = api.get_profile() or {}
             emit({
                 "event": "login-complete",
-                "profile": {
-                    "name": profile.get("displayName") or "LINE account",
-                    "mid": profile.get("mid") or "",
-                },
+                "profile": {"name": profile.get("displayName") or "LINE account", "mid": profile.get("mid") or ""},
             })
         except Exception as exc:
             if client is not None and client is not api:
@@ -107,11 +95,12 @@ def login() -> None:
 
 
 def dispatch(request: dict[str, Any]) -> None:
+    global api
     request_id = request.get("id")
     action = str(request.get("action") or "")
     try:
         if action == "login":
-            login()
+            login(request_id)
             return
         if action == "state":
             if not SESSION_PATH.is_file():
@@ -163,14 +152,16 @@ def dispatch(request: dict[str, Any]) -> None:
             for item in raw:
                 if not isinstance(item, dict):
                     continue
-                msg = safe_message(item)
+                try:
+                    msg = client.decrypt_message(item)
+                except Exception:
+                    msg = {**item, "text": "[encrypted — could not decrypt]"}
                 messages.append({
                     "id": str(msg.get("id") or ""),
                     "sender": str(msg.get("from") or ""),
                     "text": str(msg.get("text") or ""),
                     "timestamp": int(msg.get("createdTime") or 0),
                     "contentType": int(msg.get("contentType") or 0),
-                    "encrypted": bool(msg.get("chunks")),
                 })
             emit({"id": request_id, "ok": True, "messages": messages})
             return
@@ -180,8 +171,8 @@ def dispatch(request: dict[str, Any]) -> None:
             text = str(request.get("text") or "").strip()
             if not chat_id or not text:
                 raise ValueError("chatId and text are required.")
-            result = client.send_text(chat_id, text)
-            emit({"id": request_id, "ok": True, "sent": True, "result": result})
+            client.send_text(chat_id, text)
+            emit({"id": request_id, "ok": True, "sent": True})
             return
         if action == "logout":
             if api is not None:
@@ -190,16 +181,13 @@ def dispatch(request: dict[str, Any]) -> None:
                 finally:
                     api.close()
                     api = None
-            try:
-                SESSION_PATH.unlink(missing_ok=True)
-            except OSError:
-                pass
+            SESSION_PATH.unlink(missing_ok=True)
             emit({"id": request_id, "ok": True, "loggedIn": False})
             return
         if action == "shutdown":
             emit({"id": request_id, "ok": True})
             raise SystemExit(0)
-        raise ValueError(f"Unknown bridge action: {action}")
+        raise ValueError("Unknown bridge action: " + action)
     except SystemExit:
         raise
     except Exception as exc:
@@ -214,8 +202,8 @@ def main() -> None:
                 dispatch(request)
         except SystemExit:
             break
-        except Exception:
-            emit({"event": "error", "error": traceback.format_exc(limit=3)})
+        except Exception as exc:
+            emit({"event": "error", "error": str(exc)})
 
 
 if __name__ == "__main__":
