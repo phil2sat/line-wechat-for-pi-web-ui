@@ -410,16 +410,6 @@ export default {
       }
     });
 
-    try {
-      const result = await call("state", {}, 60000);
-      state.connected = Boolean(result.loggedIn);
-      state.profile = result.profile ?? null;
-      state.loginStatus = state.connected ? "Connected as " + (state.profile?.name ?? "LINE") : "Not connected";
-    } catch (error) {
-      state.lastError = error?.message ?? String(error);
-      host.log("warn", "[line] LINE runtime is prepared on first use:", state.lastError);
-    }
-
     publish();
     host.log("info", "[line] plugin activated; QR login is available");
 
