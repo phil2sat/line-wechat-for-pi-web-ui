@@ -31,7 +31,7 @@ Path: `plugins/wechat-ilink/`
 - QR login, outbound long polling, inbox, media handling, and personal-account sending.
 - Agent tools expose recent inbox messages and create German reply drafts.
 - The plugin view requires explicit approval, translates the approved draft, then sends it.
-- Automatic agent-driving and direct AI sending remain disabled by default.
+- Automatic agent-driving remains disabled by default, and no direct agent-send tool is registered.
 
 See [WeChat plugin documentation](./plugins/wechat-ilink/README.en.md).
 
