@@ -44,6 +44,7 @@ async function preparePythonRuntime() {
     : join(venv, "bin", "python");
   const systemPython = process.env.LINE_PYTHON || (process.platform === "win32" ? "python" : "python3");
   mkdirSync(root, { recursive: true });
+  if (Number(process.versions.node.split(".")[0]) < 18) throw new Error("OkLine requires Node.js 18 or newer.");
 
   if (!existsSync(python)) await run(systemPython, ["-m", "venv", venv]);
   try {
@@ -52,7 +53,7 @@ async function preparePythonRuntime() {
     await run(python, ["-m", "pip", "install", "--upgrade", "okline[qr]==" + OKLINE_VERSION]);
   }
   await run(python, ["-c", "import okline, qrcode; assert okline.__version__ == '" + OKLINE_VERSION + "'"]);
-  return { python, sessionPath: join(root, "session.json") };
+  return { python, sessionPath: join(homedir(), ".local", "share", "pi-web-ui", "line", "session.json") };
 }
 
 class OkLineBridge {
@@ -179,7 +180,7 @@ export default {
     let preparing = null;
     let drafts = (host.storage.get("drafts", []) ?? []).map(safeDraft).slice(-MAX_DRAFTS);
     const toolsOff = [];
-    const savedSessionPath = join(homedir(), ".cache", "pi-web-ui", "line", "session.json");
+    const savedSessionPath = join(homedir(), ".local", "share", "pi-web-ui", "line", "session.json");
     if (existsSync(savedSessionPath)) {
       state.connected = true;
       state.loginStatus = "Saved LINE session found — refresh to verify.";
