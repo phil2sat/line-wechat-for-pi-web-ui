@@ -1,0 +1,10 @@
+{
+  "id": "ameblo",
+  "name": "Ameblo",
+  "nameEn": "Ameblo",
+  "version": "1.0.0",
+  "icon": "📝",
+  "description": "Search and read Ameblo entries, view article images, and publish user-approved comment drafts.",
+  "descriptionEn": "Search and read Ameblo entries, view article images, and publish user-approved comment drafts.",
+  "permissions": ["ui", "tools", "storage"]
+}
