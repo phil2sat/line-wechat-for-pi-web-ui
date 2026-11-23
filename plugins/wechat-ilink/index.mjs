@@ -535,7 +535,7 @@ export default {
 			lastPollAt: 0,
 			lastError: "",
 			inbox: [],
-			drafts: store.get("replyDrafts", []) ?? [],
+			drafts: Array.isArray(store.get("replyDrafts", [])) ? store.get("replyDrafts", []).slice(-100) : [],
 			peerCtx: {},
 			peerLastAt: {},
 			allowedPeers: [],
