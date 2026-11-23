@@ -96,3 +96,16 @@ Send slash commands straight in WeChat (English `/`, full-width Chinese `／` an
   - `10/help` or `/10` or `/h` or `/`: show help
 - **Automatic push on successful pairing**: after an admin completes pairing in the web console, the channel automatically sends that WeChat user a short connection-success greeting plus a cheat sheet of the most-used commands.
 - **Third-party plugin command passthrough**: commands registered by installed plugins (e.g. `/todo`, `/note`, `/remind`) are supported — send one in WeChat and it runs directly, echoing the plugin's result.
+
+
+## Human-approved translation workflow
+
+This fork adds a review-first workflow alongside the upstream channel:
+
+- `wechat_read_inbox` exposes recent captured messages to the agent as read-only context.
+- `wechat_create_reply_draft` stores a German reply draft for a paired contact. It never sends.
+- The plugin view displays pending drafts and requires an explicit approval click.
+- Approval translates the exact stored German draft with the configured model and sends it to the paired contact. Translation failure prevents sending.
+- The optional upstream `wechat_send` tool remains disabled by default (`aiSend: false`). Automatic agent execution of inbound messages is also disabled by default (`autoDrive: false`).
+
+The plugin requests the host `llm` permission for translation. Draft approval is scoped to one immutable draft ID; rejected, sent, failed, or in-progress drafts cannot be approved again.
