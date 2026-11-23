@@ -121,15 +121,6 @@
       "default": true,
       "hint": "微信发来的图片/文件下载解密后存到工作区 .pi-wechat-media/，AI 可直接读取；关 = 只收占位文字（省流量）",
       "hintEn": "Images/files from WeChat are decrypted into workspace .pi-wechat-media/ for the AI to read directly; off = placeholder text only (saves bandwidth)"
-    },
-    {
-      "key": "aiSend",
-      "type": "boolean",
-      "label": "给 AI 发微信工具",
-      "labelEn": "Enable wechat_send for the AI",
-      "default": false,
-      "hint": "注册 wechat_send，agent 可主动发微信文本/图片/文件",
-      "hintEn": "Register wechat_send so the agent can proactively send WeChat text/images/files"
     }
   ]
 }
