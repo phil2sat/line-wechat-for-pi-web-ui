@@ -22,9 +22,9 @@ The QR URL includes the Curve25519 public key and E2EE version required by LINE.
 
 ## Session storage
 
-The session, including the E2EE keychain, is stored outside the repository at:
+The Python virtual environment is stored under `~/.cache/pi-web-ui/line/venv`. The session, including the E2EE keychain, is stored outside the repository in the persistent user-data directory:
 
-`~/.cache/pi-web-ui/line/session.json`
+`~/.local/share/pi-web-ui/line/session.json`
 
 The file is created with owner-only permissions where supported. Treat it as a password: anyone who can read it can access the LINE account. The session is restored automatically when the plugin next uses the bridge. Token refreshes are persisted by OkLine.
 
