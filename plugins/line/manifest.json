@@ -1,0 +1,31 @@
+{
+  "id": "line",
+  "name": "LINE Personal Account",
+  "nameEn": "LINE Personal Account",
+  "version": "1.0.0",
+  "alwaysOn": true,
+  "icon": "💬",
+  "description": "Read personal LINE conversations, translate and draft replies, then send only after explicit approval.",
+  "descriptionEn": "Personal LINE account connector with translation, reply drafts, and explicit send approval.",
+  "permissions": ["ui", "tools", "llm", "storage"],
+  "settings": [
+    {
+      "key": "yomiVersion",
+      "type": "text",
+      "label": "Yomi package version",
+      "labelEn": "Yomi package version",
+      "default": "0.7.5",
+      "hint": "Pinned upstream Yomi version used by npx.",
+      "hintEn": "Pinned upstream Yomi version used by npx."
+    },
+    {
+      "key": "defaultTargetLanguage",
+      "type": "text",
+      "label": "Default reply language",
+      "labelEn": "Default reply language",
+      "default": "German",
+      "hint": "Language of agent-written drafts. Set the recipient's language in the draft tool.",
+      "hintEn": "Language of agent-written drafts. Set the recipient's language in the draft tool."
+    }
+  ]
+}
