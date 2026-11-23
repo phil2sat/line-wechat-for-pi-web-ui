@@ -793,6 +793,45 @@ export default {
 			}
 		}
 
+		async function approveDraft(draftId) {
+			const draft = st.drafts.find((item) => item.id === String(draftId));
+			if (!draft || draft.status !== "pending") throw new Error("Draft is no longer pending");
+			if (!isAllowed(draft.peer)) throw new Error("The WeChat contact is not paired");
+			draft.status = "translating";
+			draft.error = "";
+			save();
+			pushState();
+			try {
+				let outgoing = draft.germanText;
+				if (!/^(german|deutsch|de)$/i.test(draft.targetLanguage)) {
+					const translated = await host.llm.complete({
+						system: "Translate the supplied German message into the requested target language. Preserve meaning, tone, names, formatting and intent. Return only the translated message.",
+						prompt: `Target language: ${draft.targetLanguage}\n\nGerman message:\n${draft.germanText}`,
+						maxChars: 12000,
+						timeoutMs: 60000,
+					});
+					if (!translated?.ok || !String(translated.text ?? "").trim()) throw new Error(translated?.error ?? "Translation failed; message was not sent");
+					outgoing = String(translated.text).trim();
+				}
+				draft.translatedText = outgoing;
+				draft.status = "sending";
+				save();
+				pushState();
+				await sendText(draft.peer, outgoing, st.peerCtx[draft.peer]);
+				draft.status = "sent";
+				draft.error = "";
+				save();
+				pushState();
+				return { sent: true, draftId: draft.id };
+			} catch (error) {
+				draft.status = "failed";
+				draft.error = error?.message ?? String(error);
+				save();
+				pushState();
+				throw error;
+			}
+		}
+
 		async function sendPairSuccess(peer) {
 			const text = [
 				"🎉 配对成功！直接发送消息即可对话。",
@@ -2027,6 +2066,21 @@ export default {
 					}
 					case "set_bind_active": {
 						setBindActive(msg.bindActive);
+						break;
+					}
+					case "approve_draft": {
+						void approveDraft(msg.draftId).catch((err) => {
+							if (from) host.sendTo(from, { kind: "error", error: String(err?.message ?? err) });
+						});
+						break;
+					}
+					case "reject_draft": {
+						const draft = st.drafts.find((item) => item.id === String(msg.draftId));
+						if (draft && draft.status === "pending") {
+							draft.status = "rejected";
+							save();
+							pushState();
+						}
 						break;
 					}
 					case "send": {
