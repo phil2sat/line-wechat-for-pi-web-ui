@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 
 const execFile = promisify(execFileCallback);
 const OKLINE_VERSION = "2.9.2";
+const OKLINE_REQUIREMENT = "okline[qr] @ git+https://github.com/NiceDayZc/OkLine.git@main";
 const MAX_DRAFTS = 100;
 const PLUGIN_DIR = dirname(fileURLToPath(import.meta.url));
 const BRIDGE_PATH = join(PLUGIN_DIR, "bridge.py");
@@ -84,7 +85,7 @@ async function preparePythonRuntime() {
     try {
       await run(python, ["-m", "ensurepip", "--upgrade"]);
       await run(python, ["-m", "pip", "install", "--upgrade", "pip"]);
-      await run(python, ["-m", "pip", "install", "--no-cache-dir", "okline[qr]==" + OKLINE_VERSION]);
+      await run(python, ["-m", "pip", "install", "--no-cache-dir", OKLINE_REQUIREMENT]);
     } catch (error) {
       throw new Error("OkLine dependency installation failed in " + venv + ".\n" + error.message);
     }
