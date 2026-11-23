@@ -106,6 +106,6 @@ This fork adds a review-first workflow alongside the upstream channel:
 - `wechat_create_reply_draft` stores a German reply draft for a paired contact. It never sends.
 - The plugin view displays pending drafts and requires an explicit approval click.
 - Approval translates the exact stored German draft with the configured model and sends it to the paired contact. Translation failure prevents sending.
-- The optional upstream `wechat_send` tool remains disabled by default (`aiSend: false`). Automatic agent execution of inbound messages is also disabled by default (`autoDrive: false`).
+- The direct agent-send tool is removed in this fork; the agent can only read and create drafts. Automatic agent execution of inbound messages is also disabled by default (`autoDrive: false`).
 
 The plugin requests the host `llm` permission for translation. Draft approval is scoped to one immutable draft ID; rejected, sent, failed, or in-progress drafts cannot be approved again.
