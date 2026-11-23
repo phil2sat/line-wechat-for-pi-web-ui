@@ -1,0 +1,26 @@
+name: Validate plugins
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check plugin syntax
+        run: |
+          node --check plugins/line/index.mjs
+          node --check plugins/line/client/entry.mjs
+          node --check plugins/wechat-ilink/index.mjs
+          node --check plugins/wechat-ilink/client/entry.mjs
+      - name: Run plugin tests
+        run: |
+          node --test plugins/line/index.test.mjs
+          node --test plugins/wechat-ilink/index.test.mjs
