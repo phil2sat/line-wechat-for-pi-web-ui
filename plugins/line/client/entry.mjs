@@ -77,6 +77,7 @@ export default {
 
     function render() {
       $("status").textContent = state.busy ? "Working…" : (state.loginStatus ?? (state.connected ? "Connected" : "Not connected"));
+      if (state.lastError) showError(state.lastError);
       $("qr").hidden = !state.qrImage;
       if (state.qrImage) $("qr-image").src = state.qrImage;
       $("pin-wrap").hidden = !state.pin;
