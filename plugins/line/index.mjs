@@ -28,12 +28,29 @@ function safeDraft(value) {
 }
 
 async function run(command, args, timeout = 240000) {
-  return execFile(command, args, {
-    timeout,
-    windowsHide: true,
-    maxBuffer: 8 * 1024 * 1024,
-    env: { ...process.env, PIP_DISABLE_PIP_VERSION_CHECK: "1", PYTHONUNBUFFERED: "1" },
-  });
+  try {
+    return await execFile(command, args, {
+      timeout,
+      windowsHide: true,
+      maxBuffer: 8 * 1024 * 1024,
+      env: {
+        ...process.env,
+        LINE_NODE: process.env.LINE_NODE || process.execPath,
+        PIP_DISABLE_PIP_VERSION_CHECK: "1",
+        PYTHONUNBUFFERED: "1",
+      },
+    });
+  } catch (error) {
+    const stderr = String(error?.stderr ?? "").trim();
+    const stdout = String(error?.stdout ?? "").trim();
+    const detail = [stderr, stdout].filter(Boolean).join("\n");
+    const commandText = [command, ...args].join(" ");
+    throw new Error(
+      "Command failed: " + commandText +
+      (error?.code ? " (code " + error.code + ")" : "") +
+      (detail ? "\n" + detail : "\n" + String(error?.message ?? error))
+    );
+  }
 }
 
 async function preparePythonRuntime() {
@@ -44,16 +61,46 @@ async function preparePythonRuntime() {
     : join(venv, "bin", "python");
   const systemPython = process.env.LINE_PYTHON || (process.platform === "win32" ? "python" : "python3");
   mkdirSync(root, { recursive: true });
-  if (Number(process.versions.node.split(".")[0]) < 18) throw new Error("OkLine requires Node.js 18 or newer.");
 
-  if (!existsSync(python)) await run(systemPython, ["-m", "venv", venv]);
-  try {
-    await run(python, ["-c", "import okline, qrcode"]);
-  } catch {
-    await run(python, ["-m", "pip", "install", "--upgrade", "okline[qr]==" + OKLINE_VERSION]);
+  const nodeMajor = Number(process.versions.node.split(".")[0]);
+  if (nodeMajor < 18) {
+    throw new Error("OkLine requires Node.js 18 or newer. Current runtime: " + process.version);
   }
-  await run(python, ["-c", "import okline, qrcode; assert okline.__version__ == '" + OKLINE_VERSION + "'"]);
-  return { python, sessionPath: join(homedir(), ".local", "share", "pi-web-ui", "line", "session.json") };
+
+  if (!existsSync(python)) {
+    try {
+      await run(systemPython, ["-m", "venv", venv]);
+    } catch (error) {
+      throw new Error(
+        "Python virtual environment creation failed. Install Python 3.9+ with the venv/ensurepip package, " +
+        "or set LINE_PYTHON to a working Python executable.\n" + error.message
+      );
+    }
+  }
+
+  try {
+    await run(python, ["-c", "import okline, qrcode; assert okline.__version__ == '" + OKLINE_VERSION + "'"]);
+  } catch {
+    try {
+      await run(python, ["-m", "ensurepip", "--upgrade"]);
+      await run(python, ["-m", "pip", "install", "--upgrade", "pip"]);
+      await run(python, ["-m", "pip", "install", "--no-cache-dir", "okline[qr]==" + OKLINE_VERSION]);
+    } catch (error) {
+      throw new Error("OkLine dependency installation failed in " + venv + ".\n" + error.message);
+    }
+  }
+
+  try {
+    await run(python, ["-c", "import okline, qrcode; assert okline.__version__ == '" + OKLINE_VERSION + "'"]);
+  } catch (error) {
+    throw new Error("OkLine runtime verification failed.\n" + error.message);
+  }
+
+  return {
+    python,
+    node: process.env.LINE_NODE || process.execPath,
+    sessionPath: join(homedir(), ".local", "share", "pi-web-ui", "line", "session.json"),
+  };
 }
 
 class OkLineBridge {
@@ -79,7 +126,7 @@ class OkLineBridge {
     this.child = spawn(this.runtime.python, [BRIDGE_PATH, this.runtime.sessionPath], {
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,
-      env: { ...process.env, PYTHONUNBUFFERED: "1" },
+      env: { ...process.env, LINE_NODE: this.runtime.node || process.execPath, PYTHONUNBUFFERED: "1" },
     });
     this.child.stdout.setEncoding("utf8");
     this.child.stdout.on("data", (chunk) => this.#onStdout(chunk));
@@ -236,6 +283,7 @@ export default {
         state.busy = false;
         state.lastError = error?.message ?? String(error);
         state.loginStatus = "Runtime setup failed";
+        host.log("warn", "[line] runtime setup failed:", state.lastError);
         publish();
         throw error;
       } finally { preparing = null; }
