@@ -186,11 +186,12 @@ def dispatch(request: dict[str, Any]) -> None:
             emit({"id": request_id, "ok": True, "sent": True})
             return
         if action == "logout":
-            if api is not None:
+            if SESSION_PATH.is_file():
+                client = current_api()
                 try:
-                    api.auth.logout()
+                    client.auth.logout()
                 finally:
-                    api.close()
+                    client.close()
                     api = None
             SESSION_PATH.unlink(missing_ok=True)
             emit({"id": request_id, "ok": True, "loggedIn": False})
